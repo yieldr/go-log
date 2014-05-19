@@ -1,4 +1,5 @@
-package log
+package logging
+
 // Copyright 2013, CoreOS, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,5 +69,5 @@ func NewSimple(sinks ...Sink) *Logger {
 var defaultLogger *Logger
 
 func init() {
-	defaultLogger = NewSimple(CombinedSink(os.Stdout, BasicFormat, BasicFields))
+	defaultLogger = NewSimple(WriterSink(os.Stdout, BasicFormat, BasicFields))
 }

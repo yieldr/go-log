@@ -1,6 +1,4 @@
-// +build windows
-
-package log
+package logging
 
 // Copyright 2013, CoreOS, Inc. All rights reserved.
 //
@@ -19,15 +17,39 @@ package log
 // author: David Fisher <ddf1991@gmail.com>
 // based on previous package by: Cong Ding <dinggnu@gmail.com>
 
-import (
-	"io"
+type Priority int
+
+const (
+	PriEmerg Priority = iota
+	PriAlert
+	PriCrit
+	PriErr
+	PriWarning
+	PriNotice
+	PriInfo
+	PriDebug
 )
 
-func CombinedSink(writer io.Writer, format string, fields []string) Sink {
-	sinks := make([]Sink, 0)
-	sinks = append(sinks, WriterSink(writer, format, fields))
+func (priority Priority) String() string {
+	switch priority {
+	case PriEmerg:
+		return "EMERGENCY"
+	case PriAlert:
+		return "ALERT"
+	case PriCrit:
+		return "CRITICAL"
+	case PriErr:
+		return "ERROR"
+	case PriWarning:
+		return "WARNING"
+	case PriNotice:
+		return "NOTICE"
+	case PriInfo:
+		return "INFO"
+	case PriDebug:
+		return "DEBUG"
 
-	return &combinedSink{
-		sinks: sinks,
+	default:
+		return "UNKNOWN"
 	}
 }
