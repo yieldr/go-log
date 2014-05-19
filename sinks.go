@@ -37,7 +37,7 @@ type Sink interface {
 }
 
 type ReloadSink interface {
-	Log(Fields)
+	Sink
 	Reload() error
 	Flush() error
 	Close() error
