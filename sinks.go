@@ -133,7 +133,6 @@ func (sink *fileSink) flush() error {
 
 func (sink *fileSink) reload() (err error) {
 	name := sink.file.Name()
-	sink.flush()
 	sink.close()
 	err = sink.open(name)
 	if err == nil {
@@ -155,22 +154,6 @@ func (sink *fileSink) daemon() {
 	}
 }
 
-func (sink *fileSink) Reload() error {
-	sink.mux.Lock()
-	defer sink.mux.Unlock()
-	return sink.reload()
-}
-func (sink *fileSink) Flush() error {
-	sink.mux.Lock()
-	defer sink.mux.Unlock()
-	return sink.flush()
-}
-func (sink *fileSink) Close() error {
-	sink.mux.Lock()
-	defer sink.mux.Unlock()
-	return sink.close()
-}
-
 func (sink *fileSink) Log(fields Fields) {
 	vals := make([]interface{}, len(sink.fields))
 	for i, field := range sink.fields {
@@ -186,6 +169,30 @@ func (sink *fileSink) Log(fields Fields) {
 	fmt.Fprintf(sink.out, sink.format, vals...)
 }
 
+// Closes and reopens the output file, in order to momentarily release it's file
+// handle. Typically this functionality is combined with a SIGHUP system signal.
+// Before reloading, the content of the buffer is flushed.
+func (sink *fileSink) Reload() error {
+	sink.mux.Lock()
+	defer sink.mux.Unlock()
+	return sink.reload()
+}
+
+// Flushes the buffer to disk.
+func (sink *fileSink) Flush() error {
+	sink.mux.Lock()
+	defer sink.mux.Unlock()
+	return sink.flush()
+}
+
+// Closes any open file handles used by the Sink.
+func (sink *fileSink) Close() error {
+	sink.mux.Lock()
+	defer sink.mux.Unlock()
+	return sink.close()
+}
+
+// Returns a new Sink able to buffer output and periodically flush to disk.
 func FileSink(name string, format string, fields []string) ReloadSink {
 	sink := &fileSink{
 		format: format,
