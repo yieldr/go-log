@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	BasicFormat = "%s [%9s] %s- %s\n"
+	BasicFormat = "%s [%s] %s - %s\n"
 	BasicFields = []string{"time", "priority", "prefix", "message"}
 	RichFormat  = "%s [%9s] %d %s - %s:%s:%d - %s\n"
 	RichFields  = []string{"full_time", "priority", "seq", "prefix", "filename", "funcname", "lineno", "message"}
