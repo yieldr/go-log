@@ -41,6 +41,14 @@ func (logger *Logger) Log(priority Priority, v ...interface{}) {
 	}
 }
 
+// Appends a new Sink to the Loggers slice of Sinks.
+func (logger *Logger) AddSink(s Sink) {
+	if logger.sinks == nil {
+		logger.sinks = make([]Sink, 0)
+	}
+	logger.sinks = append(logger.sinks, s)
+}
+
 func (logger *Logger) Logf(priority Priority, format string, v ...interface{}) {
 	logger.Log(priority, fmt.Sprintf(format, v...))
 }
