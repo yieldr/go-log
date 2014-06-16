@@ -1,4 +1,4 @@
-package logging
+package log
 
 // Copyright 2013, CoreOS, Inc. All rights reserved.
 //
