@@ -1,16 +1,18 @@
-go-log
-==========
+# go-log
 
-go-log is a simple logging library for Go which supports logging to
-systemd.
+A simple logging library for Go
 
 ### Examples
+
 #### Default
-This example uses the default log to log to standard out and (if available) to systemd:
+
+This example uses the default log to log to standard out:
+
 ```go
 package main
+
 import (
-	"github.com/coreos/go-log/log"
+	"github.com/yieldr/go-log/log"
 )
 
 func main() {
@@ -20,11 +22,13 @@ func main() {
 ```
 
 #### Using Sinks and Formats
+
 ```go
+
 package main
 
 import (
-	"github.com/coreos/go-log/log"
+	"github.com/yieldr/go-log/log"
 	"os"
 )
 
@@ -37,43 +41,32 @@ func main() {
 }
 ```
 
-#### Custom Sink
+#### File Sink
+
 This example only logs messages with priority `PriErr` and greater.
+
 ```go
 package main
 
 import (
-	"github.com/coreos/go-log/log"
+	"github.com/yieldr/go-log/log"
 	"os"
 )
 
 func main() {
-	l := log.NewSimple(
-		&PriorityFilter{
-			log.PriErr,
-			log.WriterSink(os.Stdout, log.BasicFormat, log.BasicFields),
-		})
-	l.Info("This will be filtered out")
-	l.Info("and not printed at all.")
-	l.Error("This will be printed, though!")
-	l.Critical("And so will this!")
-}
-
-type PriorityFilter struct {
-	priority log.Priority
-	target   log.Sink
-}
-
-func (filter *PriorityFilter) Log(fields log.Fields) {
-	// lower priority values indicate more important messages
-	if fields["priority"].(log.Priority) <= filter.priority {
-		filter.target.Log(fields)
+	s, err := log.FileSink("/var/log/app.log", log.BasicFormat, log.BasicFields)
+	if err != nil {
+		panic(err)
 	}
+	l := log.NewSimple(s)
+	l.Info("This will be written to file, in about .")
 }
 ```
 
 ### Fields
+
 The following fields are available for use in all sinks:
+
 ```go
 "prefix"       string              // static field available to all sinks
 "seq"          uint64              // auto-incrementing sequence number
@@ -84,7 +77,9 @@ The following fields are available for use in all sinks:
 "pid"          int                 // process id
 "executable"   string              // executable filename
 ```
+
 In addition, if `verbose=true` is passed to `New()`, the following (somewhat expensive) runtime fields are also available:
+
 ```go
 "funcname"     string              // function name where the log function was called
 "lineno"       int                 // line number where the log function was called
@@ -93,7 +88,9 @@ In addition, if `verbose=true` is passed to `New()`, the following (somewhat exp
 ```
 
 ### Logging functions
+
 All these functions can also be called directly to use the default log.
+
 ```go
 func (*Logger) Log(priority Priority, v ...interface)
 func (*Logger) Logf(priority Priority, format string, v ...interface{})
@@ -116,7 +113,5 @@ func (*Logger) Debugf(format string, v ...interface{})
 ```
 
 ### Acknowledgements
-This package is a mostly-from-scratch rewrite of
-[ccding/go-logging](https://github.com/ccding/go-logging) with some features
-removed and systemd support added. 
 
+This package is a fork of [coreos/go-log](https://github.com/coreos/go-log), which in turn is inspired by [ccding/go-logging](https://github.com/ccding/go-logging).
