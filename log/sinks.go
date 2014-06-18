@@ -1,6 +1,5 @@
-package log
-
-// Copyright 2013, CoreOS, Inc. All rights reserved.
+// Copyright 2013 CoreOS, Inc.
+// Copyright 2014 Yieldr
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +13,10 @@ package log
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// author: David Fisher <ddf1991@gmail.com>
-// based on previous package by: Cong Ding <dinggnu@gmail.com>
+// Author: Alex Kalyvitis <alex.kalyvitis@yieldr.com>
+// Author: David Fisher <ddf1991@gmail.com>
+// Based on previous package by: Cong Ding <dinggnu@gmail.com>
+package log
 
 import (
 	"bufio"
