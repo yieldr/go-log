@@ -36,7 +36,7 @@ const (
 )
 
 type Sink interface {
-	Log(Fields)
+	Log(string)
 }
 
 type ReloadSink interface {
@@ -48,7 +48,7 @@ type ReloadSink interface {
 
 type nullSink struct{}
 
-func (sink *nullSink) Log(fields Fields) {}
+func (sink *nullSink) Log(msg string) {}
 
 func NullSink() Sink {
 	return &nullSink{}
@@ -61,19 +61,10 @@ type writerSink struct {
 	fields []string
 }
 
-func (sink *writerSink) Log(fields Fields) {
-	vals := make([]interface{}, len(sink.fields))
-	for i, field := range sink.fields {
-		var ok bool
-		vals[i], ok = fields[field]
-		if !ok {
-			vals[i] = "???"
-		}
-	}
-
+func (sink *writerSink) Log(msg string) {
 	sink.lock.Lock()
 	defer sink.lock.Unlock()
-	fmt.Fprintf(sink.out, sink.format, vals...)
+	sink.out.Write([]byte(msg))
 }
 
 func WriterSink(out io.Writer, format string, fields []string) Sink {
@@ -81,25 +72,6 @@ func WriterSink(out io.Writer, format string, fields []string) Sink {
 		out:    out,
 		format: format,
 		fields: fields,
-	}
-}
-
-type priorityFilter struct {
-	priority Priority
-	target   Sink
-}
-
-func (filter *priorityFilter) Log(fields Fields) {
-	// lower priority values indicate more important messages
-	if fields["priority"].(Priority) <= filter.priority {
-		filter.target.Log(fields)
-	}
-}
-
-func PriorityFilter(priority Priority, target Sink) Sink {
-	return &priorityFilter{
-		priority: priority,
-		target:   target,
 	}
 }
 
@@ -209,19 +181,10 @@ func (sink *fileSink) daemon() {
 	}
 }
 
-func (sink *fileSink) Log(fields Fields) {
-	vals := make([]interface{}, len(sink.fields))
-	for i, field := range sink.fields {
-		var ok bool
-		vals[i], ok = fields[field]
-		if !ok {
-			vals[i] = "???"
-		}
-	}
-
+func (sink *fileSink) Log(msg string) {
 	sink.mux.Lock()
 	defer sink.mux.Unlock()
-	fmt.Fprintf(sink.out, sink.format, vals...)
+	sink.out.Write(msg)
 }
 
 // Closes and reopens the output file, in order to momentarily release it's file

@@ -33,12 +33,12 @@ var (
 // This function has an unusual name to aid in finding it while walking the
 // stack. We need to do some dead reckoning from this function to access the
 // caller's stack, so there is a consistent call depth above this function.
-func (logger *Logger) Log(priority Priority, v ...interface{}) {
-	fields := logger.fieldValues()
-	fields["priority"] = priority
-	fields["message"] = fmt.Sprint(v...)
-	for _, sink := range logger.sinks {
-		sink.Log(fields)
+func (l *Logger) Log(priority Priority, v ...interface{}) {
+	msg := l.formatter.Format(priority, v)
+	for _, sink := range l.sinks {
+		if priority >= sink.priority {
+			sink.Log(priority, msg)
+		}
 	}
 }
 

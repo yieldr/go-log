@@ -29,6 +29,8 @@ import (
 
 type Fields map[string]interface{}
 
+type Values []interface{}
+
 func (logger *Logger) fieldValues() Fields {
 	now := time.Now()
 	fields := Fields{

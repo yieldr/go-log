@@ -27,9 +27,10 @@ import (
 
 // Logger is user-immutable immutable struct which can log to several outputs
 type Logger struct {
-	sinks   []Sink // the sinks this logger will log to
-	verbose bool   // gather expensive logging data?
-	prefix  string // static field available to all log sinks under this logger
+	formatter Formatter
+	sinks     []Sink // the sinks this logger will log to
+	verbose   bool   // gather expensive logging data?
+	prefix    string // static field available to all log sinks under this logger
 
 	created    time.Time // time when this logger was created
 	seq        uint64    // sequential number of log message, starting at 1
@@ -53,7 +54,7 @@ func New(prefix string, verbose bool, sinks ...Sink) *Logger {
 	}
 }
 
-func getExecutableName() string {
+func executableName() string {
 	executablePath, err := osext.Executable()
 	if err != nil {
 		return "(UNKNOWN)"
