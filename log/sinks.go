@@ -24,8 +24,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 )
@@ -41,6 +39,7 @@ type Sink interface {
 
 type ReloadSink interface {
 	Sink
+	io.Writer
 	Reload() error
 	Flush() error
 	Close() error
@@ -101,58 +100,6 @@ func PriorityFilter(priority Priority, target Sink) Sink {
 		priority: priority,
 		target:   target,
 	}
-}
-
-type multiFileSink struct {
-	sinks map[Priority]ReloadSink
-}
-
-func (sf *multiFileSink) Log(fields Fields) {
-	if sink, ok := sf.sinks[fields["priority"].(Priority)]; ok {
-		sink.Log(fields)
-	}
-}
-
-func (s *multiFileSink) Reload() (err error) {
-	for _, sink := range s.sinks {
-		if e := sink.Reload(); e != nil {
-			err = e
-		}
-	}
-	return
-}
-
-func (s *multiFileSink) Flush() (err error) {
-	for _, sink := range s.sinks {
-		if e := sink.Flush(); e != nil {
-			err = e
-		}
-	}
-	return
-}
-
-func (s *multiFileSink) Close() (err error) {
-	for _, sink := range s.sinks {
-		if e := sink.Close(); e != nil {
-			err = e
-		}
-	}
-	return
-}
-
-// Create a FileSink for every priority starting from PriEmerg until priority.
-// Each priority will be logged to it's respective file
-func MultiFileSink(dir, format string, fields []string, priority Priority) (ReloadSink, error) {
-	var err error
-	sf := &multiFileSink{sinks: make(map[Priority]ReloadSink)}
-	for p := PriEmerg; p <= priority; p++ {
-		fileName := filepath.Join(dir, strings.ToLower(p.String())) + ".log"
-		sf.sinks[p], err = FileSink(fileName, format, fields)
-		if err != nil {
-			return sf, err
-		}
-	}
-	return sf, nil
 }
 
 type fileSink struct {
@@ -222,6 +169,12 @@ func (sink *fileSink) Log(fields Fields) {
 	sink.mux.Lock()
 	defer sink.mux.Unlock()
 	fmt.Fprintf(sink.out, sink.format, vals...)
+}
+
+func (sink *fileSink) Write(b []byte) (int, error) {
+	sink.mux.Lock()
+	defer sink.mux.Unlock()
+	return sink.out.Write(b)
 }
 
 // Closes and reopens the output file, in order to momentarily release it's file
