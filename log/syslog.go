@@ -60,7 +60,7 @@ func (sink *syslogSink) Log(fields Fields) {
 }
 
 func (s *syslogSink) Write(b []byte) (int, error) {
-
+	return s.w.Write(b)
 }
 
 func SyslogSink(p Priority, format string, fields []string) (*syslogSink, error) {
