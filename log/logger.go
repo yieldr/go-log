@@ -49,11 +49,11 @@ func New(prefix string, verbose bool, sinks ...Sink) *Logger {
 
 		created:    time.Now(),
 		seq:        0,
-		executable: getExecutableName(),
+		executable: executableName(),
 	}
 }
 
-func getExecutableName() string {
+func executableName() string {
 	executablePath, err := osext.Executable()
 	if err != nil {
 		return "(UNKNOWN)"
