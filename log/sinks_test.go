@@ -15,19 +15,21 @@ package log
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"sync"
 	"testing"
 )
 
-const length = 100
+const N = 10
+
+var message = []byte{'m', 'e', 's', 's', 'a', 'g', 'e'}
 
 func TestFileSink(t *testing.T) {
 	var err error
-	sinks := make([]*fileSink, length)
-	for i := 0; i < length; i++ {
-		file := fmt.Sprintf("/tmp/file_sink_test_%d.log", i+1)
-		t.Log(file)
+	sinks := make([]*fileSink, N)
+	for i := 0; i < N; i++ {
+		file := fmt.Sprintf("/tmp/file_sink_test_%d.log", i)
 		sinks[i], err = FileSink(file, BasicFormat, BasicFields)
 		if err != nil {
 			t.Error(err.Error())
@@ -37,7 +39,13 @@ func TestFileSink(t *testing.T) {
 
 	defer func() {
 		for _, sink := range sinks {
-			t.Log(sink.file.Name())
+			b, err := ioutil.ReadFile(sink.file.Name())
+			if err != nil {
+				t.Error(err.Error())
+			}
+			if len(b) != len(message)*N {
+				t.Error("file content is not as much expected.")
+			}
 			os.Remove(sink.file.Name())
 			sink.Close()
 		}
@@ -49,22 +57,24 @@ func TestFileSink(t *testing.T) {
 	// Concurrently write, flush and reload.
 	for _, sink := range sinks {
 		s := *sink
-		t.Log(s.file.Name())
 		write.Add(1)
 		go func() {
 			defer write.Done()
-			n, err := s.Write([]byte("message\n"))
-			if err != nil {
-				t.Error(err.Error())
-			}
-			if n == 0 {
-				t.Error("no bytes written")
+			for i := 0; i < N; i++ {
+				n, err := s.Write(message)
+				if err != nil {
+					t.Error(err.Error())
+				}
+				if n == 0 {
+					t.Error("no bytes written")
+				}
+				t.Log("WR", s.file.Name(), s.out.Buffered())
 			}
 			err = s.Flush()
 			if err != nil {
 				t.Error(err)
-				t.Log(s.file, s.out.Buffered())
 			}
+			t.Log("FL", s.file.Name())
 		}()
 		reload.Add(1)
 		go func() {
@@ -73,6 +83,7 @@ func TestFileSink(t *testing.T) {
 			if err != nil {
 				t.Error(err.Error())
 			}
+			t.Log("RE", s.file.Name(), s.out.Buffered())
 		}()
 	}
 

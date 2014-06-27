@@ -1,4 +1,3 @@
-// Copyright 2013 CoreOS, Inc.
 // Copyright 2014 Yieldr
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,30 +13,13 @@
 // limitations under the License.
 package log
 
-type Priority int
-
-const (
-	PriEmerg Priority = iota
-	PriAlert
-	PriCrit
-	PriErr
-	PriWarning
-	PriNotice
-	PriInfo
-	PriDebug
+import (
+	"testing"
 )
 
-var priorityMap = map[Priority]string{
-	PriEmerg:   "EMERGENCY",
-	PriAlert:   "ALERT",
-	PriCrit:    "CRITICAL",
-	PriErr:     "ERROR",
-	PriWarning: "WARNING",
-	PriNotice:  "NOTICE",
-	PriInfo:    "INFO",
-	PriDebug:   "DEBUG",
-}
-
-func (priority Priority) String() string {
-	return priorityMap[priority]
+func TestPriorityString(t *testing.T) {
+	p := PriInfo
+	if p.String() != "INFO" {
+		t.Error("wrong mapping")
+	}
 }
