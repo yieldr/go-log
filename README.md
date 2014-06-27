@@ -1,12 +1,12 @@
 # go-log
 
-A simple logging library for Go
+A simple logging library for Go, with powerful file handling and syslog support.
 
 ### Examples
 
 #### Default
 
-This example uses the default log to log to standard out:
+This example uses the default log to write messages to standard out:
 
 ```go
 package main
@@ -43,7 +43,7 @@ func main() {
 
 #### File Sink
 
-This example only logs messages with priority `PriErr` and greater.
+This example buffers log messages in memory and writes the contents on disk every 30 seconds. Additionally the file handle is closed and reopened every hour, to release any resources held by the os. In addition to functions supported by `Sink`, this sink also allows the user to `Flush()`, `Reload()`, `Close()` and `Write(b []byte)`.
 
 ```go
 package main
@@ -54,12 +54,35 @@ import (
 )
 
 func main() {
-	s, err := log.FileSink("/var/log/app.log", log.BasicFormat, log.BasicFields)
+	sink, err := log.FileSink("/var/log/app.log", log.BasicFormat, log.BasicFields)
 	if err != nil {
 		panic(err)
 	}
-	l := log.NewSimple(s)
-	l.Info("This will be written to file, in about .")
+	defer sink.Close()
+	logger := log.NewSimple(sink)
+	logger.Info("This will be buffered and eventually written to file.")
+}
+```
+
+#### Syslog Sink
+
+This example logs messages to the systems log daemon.
+
+```go
+package main
+
+import (
+	"github.com/yieldr/go-log/log"
+	"os"
+)
+
+func main() {
+	syslog, err := log.SyslogSink(log.PriDebug, log.BasicFormat, log.BasicFields)
+	if err != nil {
+		panic(err)
+	}
+	logger := log.NewSimple(syslog)
+	logger.Info("This will be logged to syslog")
 }
 ```
 
