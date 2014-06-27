@@ -1,4 +1,3 @@
-// Copyright 2013 CoreOS, Inc.
 // Copyright 2014 Yieldr
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// Author: Alex Kalyvitis <alex.kalyvitis@yieldr.com>
-// Author: David Fisher <ddf1991@gmail.com>
-// Based on previous package by: Cong Ding <dinggnu@gmail.com>
 package log
 
 import (
