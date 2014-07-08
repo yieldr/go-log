@@ -19,9 +19,10 @@ import (
 )
 
 type syslogSink struct {
-	w      *syslog.Writer
-	format string
-	fields []string
+	w        *syslog.Writer
+	priority Priority
+	format   string
+	fields   []string
 }
 
 func (sink *syslogSink) Log(fields Fields) {
@@ -34,28 +35,36 @@ func (sink *syslogSink) Log(fields Fields) {
 		}
 	}
 	msg := fmt.Sprintf(sink.format, vals...)
-	switch fields["priority"].(Priority) {
-	case PriEmerg:
-		sink.w.Emerg(msg)
-	case PriAlert:
-		sink.w.Alert(msg)
-	case PriCrit:
-		sink.w.Crit(msg)
-	case PriErr:
-		sink.w.Err(msg)
-	case PriWarning:
-		sink.w.Warning(msg)
-	case PriNotice:
-		sink.w.Notice(msg)
-	case PriInfo:
-		sink.w.Info(msg)
-	case PriDebug:
-		sink.w.Debug(msg)
+	if priority := fields["priority"].(Priority); priority <= sink.priority {
+		switch priority {
+		case PriEmerg:
+			sink.w.Emerg(msg)
+		case PriAlert:
+			sink.w.Alert(msg)
+		case PriCrit:
+			sink.w.Crit(msg)
+		case PriErr:
+			sink.w.Err(msg)
+		case PriWarning:
+			sink.w.Warning(msg)
+		case PriNotice:
+			sink.w.Notice(msg)
+		case PriInfo:
+			sink.w.Info(msg)
+		case PriDebug:
+			sink.w.Debug(msg)
+		default:
+			sink.w.Err(msg)
+		}
 	}
 }
 
 func (s *syslogSink) Write(b []byte) (int, error) {
 	return s.w.Write(b)
+}
+
+func (s *syslogSink) Close() error {
+	return s.w.Close()
 }
 
 func SyslogSink(p Priority, format string, fields []string) (*syslogSink, error) {
@@ -64,5 +73,5 @@ func SyslogSink(p Priority, format string, fields []string) (*syslogSink, error)
 	if err != nil {
 		return nil, err
 	}
-	return &syslogSink{w, format, fields}, nil
+	return &syslogSink{w, p, format, fields}, nil
 }
