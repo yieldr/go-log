@@ -20,10 +20,12 @@ import (
 )
 
 var (
-	BasicFormat = "%s [%s] %s - %s\n"
-	BasicFields = []string{"time", "priority", "prefix", "message"}
-	RichFormat  = "%s [%9s] %d %s - %s:%s:%d - %s\n"
-	RichFields  = []string{"full_time", "priority", "seq", "prefix", "filename", "funcname", "lineno", "message"}
+	BasicFormat  = "%s [%s] %s\n"
+	BasicFields  = []string{"time", "priority", "message"}
+	RichFormat   = "%s [%9s] %d %s - %s:%s:%d - %s\n"
+	RichFields   = []string{"full_time", "priority", "seq", "prefix", "filename", "funcname", "lineno", "message"}
+	SyslogFormat = "[%s] %s\n"
+	SyslogFields = []string{"priority", "message"}
 )
 
 // This function has an unusual name to aid in finding it while walking the

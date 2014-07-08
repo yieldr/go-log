@@ -35,27 +35,26 @@ func (sink *syslogSink) Log(fields Fields) {
 		}
 	}
 	msg := fmt.Sprintf(sink.format, vals...)
-	if priority := fields["priority"].(Priority); priority <= sink.priority {
-		switch priority {
-		case PriEmerg:
-			sink.w.Emerg(msg)
-		case PriAlert:
-			sink.w.Alert(msg)
-		case PriCrit:
-			sink.w.Crit(msg)
-		case PriErr:
-			sink.w.Err(msg)
-		case PriWarning:
-			sink.w.Warning(msg)
-		case PriNotice:
-			sink.w.Notice(msg)
-		case PriInfo:
-			sink.w.Info(msg)
-		case PriDebug:
-			sink.w.Debug(msg)
-		default:
-			sink.w.Err(msg)
-		}
+	switch fields["priority"].(Priority) {
+	case PriEmerg:
+		sink.w.Emerg(msg)
+	case PriAlert:
+		sink.w.Alert(msg)
+	case PriCrit:
+		sink.w.Crit(msg)
+	case PriErr:
+		sink.w.Err(msg)
+	case PriWarning:
+		sink.w.Warning(msg)
+	case PriNotice:
+		sink.w.Notice(msg)
+	case PriInfo:
+		sink.w.Info(msg)
+	case PriDebug:
+		sink.w.Debug(msg)
+	default:
+		sink.w.Err(msg)
+
 	}
 }
 
