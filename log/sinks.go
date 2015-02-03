@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	flushInterval  = time.Second * 30
+	flushInterval  = time.Second * 3
 	reloadInterval = time.Hour * 1
 )
 
