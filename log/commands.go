@@ -32,7 +32,7 @@ var (
 // stack. We need to do some dead reckoning from this function to access the
 // caller's stack, so there is a consistent call depth above this function.
 func (logger *Logger) Log(priority Priority, v ...interface{}) {
-	fields := logger.fieldValues()
+	fields := logger.fields()
 	fields["priority"] = priority
 	fields["message"] = fmt.Sprint(v...)
 	for _, sink := range logger.sinks {

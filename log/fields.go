@@ -15,52 +15,57 @@ package log
 
 import (
 	"os"
-	"path"
-	"runtime"
-	"strings"
 	"sync/atomic"
 	"time"
 )
 
 type Fields map[string]interface{}
 
-func (logger *Logger) fieldValues() Fields {
-	now := time.Now()
+func (logger *Logger) fields() Fields {
 	fields := Fields{
-		"prefix":     logger.prefix,               // static field available to all sinks
-		"seq":        logger.nextSeq(),            // auto-incrementing sequence number
-		"start_time": logger.created,              // start time of the logger
-		"time":       now.Format(time.StampMilli), // formatted time of log entry
-		"full_time":  now,                         // time of log entry
-		"rtime":      time.Since(logger.created),  // relative time of log entry since started
-		"pid":        os.Getpid(),                 // process id
-		"executable": logger.executable,           // executable filename
+		"prefix":     logger.prefixFn,      // static field available to all sinks
+		"seq":        logger.seqFn,         // auto-incrementing sequence number
+		"start_time": logger.createdFn,     // start time of the logger
+		"time":       logger.timeMilliFn,   // formatted time of log entry
+		"full_time":  logger.timeFn,        // time of log entry
+		"rtime":      logger.timeElapsedFn, // relative time of log entry since started
+		"pid":        logger.pidFn,         // process id
+		"executable": logger.executableFn,  // executable filename
 	}
 
-	if logger.verbose {
-		setVerboseFields(fields)
-	}
 	return fields
 }
 
-func (logger *Logger) nextSeq() uint64 {
+type fieldFn func() interface{}
+
+func (l *Logger) prefixFn() interface{} {
+	return l.prefix
+}
+
+func (l *Logger) seqFn() interface{} {
 	return atomic.AddUint64(&logger.seq, 1)
 }
 
-func setVerboseFields(fields Fields) {
-	callers := make([]uintptr, 10)
-	n := runtime.Callers(3, callers) // starts in (*Logger).Log or similar
-	callers = callers[:n]
+func (l *Logger) createdFn() interface{} {
+	return l.created
+}
 
-	for _, pc := range callers {
-		f := runtime.FuncForPC(pc)
-		if !strings.Contains(f.Name(), "logger.(*Logger)") {
-			fields["funcname"] = f.Name()
-			pathname, lineno := f.FileLine(pc)
-			fields["lineno"] = lineno
-			fields["pathname"] = pathname
-			fields["filename"] = path.Base(pathname)
-			return
-		}
-	}
+func (l *Logger) timeMilliFn() interface{} {
+	return time.Now().Format(time.StampMilli)
+}
+
+func (l *Logger) timeFn() interface{} {
+	return time.Now()
+}
+
+func (l *Logger) timeElapsedFn() interface{} {
+	return time.Since(l.created)
+}
+
+func (l *Logger) pidFn() interface{} {
+	return os.Getpid()
+}
+
+func (l *Logger) executableFn() interface{} {
+	l.executable
 }

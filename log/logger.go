@@ -15,56 +15,60 @@
 package log
 
 import (
-	"bitbucket.org/kardianos/osext"
 	"os"
-	"path"
 	"time"
+
+	"bitbucket.org/kardianos/osext"
 )
+
+// The Option type can be passed to the New function to customise the logger.
+type Option func(*Logger)
+
+// Sink adds s to the logger's output sinks.
+func Sink(s sink) Option {
+	return func(l *Logger) {
+		l.sinks = append(l.sinks, s)
+	}
+}
+
+// Prefix sets the logger's prefix to s.
+func Prefix(s string) Option {
+	return func(l *Logger) {
+		l.prefix = s
+	}
+}
 
 // Logger is user-immutable immutable struct which can log to several outputs
 type Logger struct {
-	sinks   []Sink // the sinks this logger will log to
-	verbose bool   // gather expensive logging data?
-	prefix  string // static field available to all log sinks under this logger
-
-	created    time.Time // time when this logger was created
-	seq        uint64    // sequential number of log message, starting at 1
-	executable string    // executable name
+	sinks   []Sink    // the sinks this logger will log to
+	prefix  string    // static field available to all log sinks under this logger
+	created time.Time // time when this logger was created
+	seq     uint64    // sequential number of log message, starting at 1
+	exec    string    // executable name
 }
 
-// New creates a new Logger which logs to all the supplied sinks.  The prefix
-// argument is passed to all loggers under the field "prefix" with every log
-// message.  If verbose is true, more expensive runtime fields will be computed
-// and passed to loggers.  These fields are funcname, lineno, pathname, and
-// filename.
-func New(prefix string, verbose bool, sinks ...Sink) *Logger {
-	return &Logger{
-		sinks:   sinks,
-		verbose: verbose,
-		prefix:  prefix,
-
-		created:    time.Now(),
-		seq:        0,
-		executable: executableName(),
+// New creates a new logger with the supplied options.
+func New(options ...Option) *Logger {
+	logger := new(Logger)
+	logger.created = time.Now()
+	logger.seq = 0
+	logger.executable = executable()
+	for _, option := range options {
+		option(logger)
 	}
-}
-
-func executableName() string {
-	executablePath, err := osext.Executable()
-	if err != nil {
-		return "(UNKNOWN)"
-	} else {
-		return path.Base(executablePath)
-	}
-}
-
-// NewSimple(sinks...) is equivalent to New("", false, sinks...)
-func NewSimple(sinks ...Sink) *Logger {
-	return New("", false, sinks...)
+	return logger
 }
 
 var defaultLogger *Logger
 
 func init() {
-	defaultLogger = NewSimple(WriterSink(os.Stdout, BasicFormat, BasicFields))
+	defaultLogger = New(Sink(WriterSink(os.Stdout, BasicFormat, BasicFields)))
+}
+
+func exec() string {
+	path, err := osext.Executable()
+	if err != nil {
+		return "(UNKNOWN)"
+	}
+	return path.Base(path)
 }

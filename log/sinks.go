@@ -24,11 +24,8 @@ import (
 	"time"
 )
 
-const (
-	flushInterval  = time.Second * 3
-	reloadInterval = time.Hour * 1
-)
-
+// Sink is the interface that wraps the basic Log method. The sink receives the
+// Fields from the Logger.
 type Sink interface {
 	Log(Fields)
 }
@@ -37,6 +34,7 @@ type nullSink struct{}
 
 func (sink *nullSink) Log(fields Fields) {}
 
+// NullSink returns a no-op sink typically used for testing.
 func NullSink() Sink {
 	return &nullSink{}
 }
@@ -89,6 +87,11 @@ func PriorityFilter(priority Priority, target Sink) Sink {
 		target:   target,
 	}
 }
+
+const (
+	flushInterval  = time.Second * 3
+	reloadInterval = time.Hour * 1
+)
 
 type fileSink struct {
 	out    *bufio.Writer
