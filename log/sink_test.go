@@ -14,12 +14,19 @@
 package log
 
 import (
+	"bytes"
+	"fmt"
 	"testing"
 )
 
-func TestPriorityString(t *testing.T) {
-	p := INFO
-	if p.String() != "INFO" {
-		t.Error("wrong mapping")
+func TestSink(t *testing.T) {
+	var buf bytes.Buffer
+	sink := WriterSink(&buf, SyslogFormat, SyslogFields)
+	sink.Log(Fields{
+		"priority": func() interface{} { return INFO },
+		"message":  func() interface{} { return "hello!" },
+	})
+	if buf.String() != fmt.Sprintf(SyslogFormat, INFO, "hello!") {
+		t.Errorf("unexpected output. %s", buf.String())
 	}
 }

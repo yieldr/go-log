@@ -14,30 +14,35 @@
 // limitations under the License.
 package log
 
+// Priority is used to facilitate leveled logging as defined by the syslog
+// protocol. Severity values MUST be in the range of 0 to 7 inclusive, with 7
+// being the highest or most verbose level.
+//
+// See http://tools.ietf.org/html/rfc5424
 type Priority int
 
 const (
-	PriEmerg Priority = iota
-	PriAlert
-	PriCrit
-	PriErr
-	PriWarning
-	PriNotice
-	PriInfo
-	PriDebug
+	EMERGENCY Priority = iota
+	ALERT
+	CRITICAL
+	ERROR
+	WARNING
+	NOTICE
+	INFO
+	DEBUG
 )
 
-var priorityMap = map[Priority]string{
-	PriEmerg:   "EMERGENCY",
-	PriAlert:   "ALERT",
-	PriCrit:    "CRITICAL",
-	PriErr:     "ERROR",
-	PriWarning: "WARNING",
-	PriNotice:  "NOTICE",
-	PriInfo:    "INFO",
-	PriDebug:   "DEBUG",
+var priorities = map[Priority]string{
+	EMERGENCY: "EMERGENCY",
+	ALERT:     "ALERT",
+	CRITICAL:  "CRITICAL",
+	ERROR:     "ERROR",
+	WARNING:   "WARNING",
+	NOTICE:    "NOTICE",
+	INFO:      "INFO",
+	DEBUG:     "DEBUG",
 }
 
-func (priority Priority) String() string {
-	return priorityMap[priority]
+func (p Priority) String() string {
+	return priorities[p]
 }

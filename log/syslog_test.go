@@ -16,10 +16,10 @@ package log
 import "testing"
 
 func TestSyslogSink(t *testing.T) {
-	syslog, err := SyslogSink(PriDebug, BasicFormat, BasicFields)
+	syslog, err := SyslogSink(DEBUG, "test", BasicFormat, BasicFields)
 	if err != nil {
 		t.Error(err.Error())
 	}
-	logger := NewSimple(syslog)
+	logger := New(syslog)
 	logger.Info("oldschool")
 }

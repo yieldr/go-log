@@ -19,53 +19,36 @@ import (
 	"time"
 )
 
-type Fields map[string]interface{}
-
-func (logger *Logger) fields() Fields {
-	fields := Fields{
-		"prefix":     logger.prefixFn,      // static field available to all sinks
-		"seq":        logger.seqFn,         // auto-incrementing sequence number
-		"start_time": logger.createdFn,     // start time of the logger
-		"time":       logger.timeMilliFn,   // formatted time of log entry
-		"full_time":  logger.timeFn,        // time of log entry
-		"rtime":      logger.timeElapsedFn, // relative time of log entry since started
-		"pid":        logger.pidFn,         // process id
-		"executable": logger.executableFn,  // executable filename
-	}
-
-	return fields
-}
+type Fields map[string]fieldFn
 
 type fieldFn func() interface{}
 
-func (l *Logger) prefixFn() interface{} {
+func (l *logger) prefixFn() interface{} {
 	return l.prefix
 }
 
-func (l *Logger) seqFn() interface{} {
-	return atomic.AddUint64(&logger.seq, 1)
+var dateFormat = time.Stamp
+
+func DateFormat(f string) {
+	dateFormat = f
 }
 
-func (l *Logger) createdFn() interface{} {
-	return l.created
+func (l *logger) createdFn() interface{} {
+	return l.created.Format(dateFormat)
 }
 
-func (l *Logger) timeMilliFn() interface{} {
-	return time.Now().Format(time.StampMilli)
+func (l *logger) timeFn() interface{} {
+	return time.Now().Format(dateFormat)
 }
 
-func (l *Logger) timeFn() interface{} {
-	return time.Now()
-}
-
-func (l *Logger) timeElapsedFn() interface{} {
+func (l *logger) elapsedFn() interface{} {
 	return time.Since(l.created)
 }
 
-func (l *Logger) pidFn() interface{} {
-	return os.Getpid()
+func (l *logger) seqFn() interface{} {
+	return atomic.AddUint64(&l.seq, 1)
 }
 
-func (l *Logger) executableFn() interface{} {
-	l.executable
+func (l *logger) pidFn() interface{} {
+	return os.Getpid()
 }

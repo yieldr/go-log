@@ -35,22 +35,22 @@ func (sink *syslogSink) Log(fields Fields) {
 		}
 	}
 	msg := fmt.Sprintf(sink.format, vals...)
-	switch fields["priority"].(Priority) {
-	case PriEmerg:
+	switch fields["priority"]().(Priority) {
+	case EMERGENCY:
 		sink.w.Emerg(msg)
-	case PriAlert:
+	case ALERT:
 		sink.w.Alert(msg)
-	case PriCrit:
+	case CRITICAL:
 		sink.w.Crit(msg)
-	case PriErr:
+	case ERROR:
 		sink.w.Err(msg)
-	case PriWarning:
+	case WARNING:
 		sink.w.Warning(msg)
-	case PriNotice:
+	case NOTICE:
 		sink.w.Notice(msg)
-	case PriInfo:
+	case INFO:
 		sink.w.Info(msg)
-	case PriDebug:
+	case DEBUG:
 		sink.w.Debug(msg)
 	default:
 		sink.w.Err(msg)
@@ -66,9 +66,9 @@ func (s *syslogSink) Close() error {
 	return s.w.Close()
 }
 
-func SyslogSink(p Priority, format string, fields []string) (*syslogSink, error) {
+func SyslogSink(p Priority, tag, format string, fields []string) (*syslogSink, error) {
 	prio := syslog.Priority(p) | syslog.LOG_USER
-	w, err := syslog.New(prio, executableName())
+	w, err := syslog.New(prio, tag)
 	if err != nil {
 		return nil, err
 	}
