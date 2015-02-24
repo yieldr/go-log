@@ -1,3 +1,5 @@
+package logrotate
+
 // Copyright 2014 Yieldr
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +13,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package logrotate
 
 import (
 	"bufio"
@@ -92,6 +93,9 @@ func (l *Logrotate) rotate(t time.Time) error {
 	return nil
 }
 
+// Log satisfies the log.Sink interface so it can be supplied as an argument to
+// log.New(). It writes the log to the internal buffer, using the format and
+// fields.
 func (l *Logrotate) Log(fields log.Fields) {
 	l.mux.Lock()
 	defer l.mux.Unlock()
@@ -106,49 +110,85 @@ func (l *Logrotate) Log(fields log.Fields) {
 	fmt.Fprintf(l.buf, l.format, vals...)
 }
 
+// Write writes p to the internal buffer.
+func (l *Logrotate) Write(p []byte) (int, error) {
+	l.mux.Lock()
+	defer l.mux.Unlock()
+	return l.buf.Write(p)
+}
+
+// Flush empties the contents of the internal buffer to the output file.
+func (l *Logrotate) Flush() error {
+	l.mux.Lock()
+	defer l.mux.Unlock()
+	return l.flush()
+}
+
+// Reload flushes the internal buffer to the output file, closes the file and re
+// opens the file.
 func (l *Logrotate) Reload() error {
 	l.mux.Lock()
 	defer l.mux.Unlock()
 	return l.reload()
 }
 
+// Rotate performs a file rotation similar to that of the logrotate(8) utility.
 func (l *Logrotate) Rotate() error {
 	l.mux.Lock()
 	defer l.mux.Unlock()
 	return l.rotate(time.Now())
 }
 
+// Close flushes the internal buffer to the output file and closes the file.
 func (l *Logrotate) Close() error {
 	l.mux.Lock()
 	defer l.mux.Unlock()
 	return l.close()
 }
 
+// Run will block and call Rotate or Flush on their respective intervals. If an
+// error occurs during those operations should be handled by callers using the
+// error channel returned by the Error method. This method will only return once
+// the Stop method is called.
 func (l *Logrotate) Run() {
-	ticker := time.NewTicker(l.interval)
+	rotate := time.NewTicker(l.interval)
+	flush := time.NewTicker(time.Second * 3)
 	for {
 		select {
-		case <-ticker.C:
-			l.Rotate()
+		case <-rotate.C:
+			if err := l.Rotate(); err != nil {
+				l.err <- err
+			}
+		case <-flush.C:
+			if err := l.Flush(); err != nil {
+				l.err <- err
+			}
 		case <-l.stop:
-			ticker.Stop()
+			rotate.Stop()
+			flush.Stop()
 			return
 		}
 	}
 }
 
+// Done returns a channel which will receive when the Run method has returned.
 func (l *Logrotate) Done() <-chan bool {
 	return l.stop
 }
 
+// Error returns a channel which will receive an error if one was encountered
+// during a rotate or flush operation. It's up to the caller to handle the error
+// so Logrotate will keep running until Stop is called.
 func (l *Logrotate) Error() <-chan error {
 	return l.err
 }
 
+// Stop ends the execution of Run.
 func (l *Logrotate) Stop() {
 	l.stop <- true
 }
 
+// New returns a new Logrotate using the supplied arguments.
 func New(file string, interval time.Duration, format string, fields []string) (*Logrotate, error) {
 	l := &Logrotate{
 		filename: file,

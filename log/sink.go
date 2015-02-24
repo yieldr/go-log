@@ -1,3 +1,5 @@
+package log
+
 // Copyright 2013 CoreOS, Inc.
 // Copyright 2014 Yieldr
 //
@@ -12,7 +14,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package log
 
 import (
 	"fmt"
@@ -67,6 +68,8 @@ func (f *filter) Log(fields Fields) {
 	}
 }
 
+// Filter wraps the sink with leveled logging. A sink wrapped with this method
+// will ony write if the priority is equal to or less than p.
 func Filter(p Priority, s Sink) Sink {
 	return &filter{
 		priority: p,

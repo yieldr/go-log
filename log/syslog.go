@@ -1,3 +1,5 @@
+package log
+
 // Copyright 2014 Yieldr
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +13,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package log
 
 import (
 	"fmt"
@@ -58,14 +59,15 @@ func (sink *syslogSink) Log(fields Fields) {
 	}
 }
 
-func (s *syslogSink) Write(b []byte) (int, error) {
-	return s.w.Write(b)
+func (sink *syslogSink) Write(b []byte) (int, error) {
+	return sink.w.Write(b)
 }
 
-func (s *syslogSink) Close() error {
-	return s.w.Close()
+func (sink *syslogSink) Close() error {
+	return sink.w.Close()
 }
 
+// SyslogSink returns a sink that outputs to the local syslog daemon.
 func SyslogSink(p Priority, tag, format string, fields []string) (*syslogSink, error) {
 	prio := syslog.Priority(p) | syslog.LOG_USER
 	w, err := syslog.New(prio, tag)

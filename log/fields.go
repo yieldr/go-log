@@ -1,3 +1,5 @@
+package log
+
 // Copyright 2013 CoreOS, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,7 +13,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package log
 
 import (
 	"os"
@@ -19,6 +20,8 @@ import (
 	"time"
 )
 
+// Fields is used by the logger to supply to its sinks. It contains information
+// such as the date, sequence, pid and so on.
 type Fields map[string]fieldFn
 
 type fieldFn func() interface{}
@@ -29,6 +32,7 @@ func (l *logger) prefixFn() interface{} {
 
 var dateFormat = time.Stamp
 
+// DateFormat sets the format to use when formatting the time.
 func DateFormat(f string) {
 	dateFormat = f
 }

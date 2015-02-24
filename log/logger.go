@@ -1,3 +1,5 @@
+package log
+
 // Copyright 2013 CoreOS, Inc.
 // Copyright 2014 Yieldr
 //
@@ -12,7 +14,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package log
 
 import (
 	"fmt"
@@ -20,6 +21,8 @@ import (
 	"time"
 )
 
+// The Logger interface defines the methods that can be called to perform
+// priority based logging.
 type Logger interface {
 	Emergency(...interface{})
 	Emergencyf(string, ...interface{})
@@ -59,12 +62,11 @@ type logger struct {
 
 // New creates a new logger with the supplied options.
 func New(sinks ...Sink) Logger {
-	logger := &logger{
+	return &logger{
 		created: time.Now(),
 		seq:     0,
 		sinks:   sinks,
 	}
-	return logger
 }
 
 func (logger *logger) Log(p Priority, v ...interface{}) {
