@@ -44,10 +44,11 @@ type Logger interface {
 
 var (
 	BasicFormat  = "%s [%s] %s\n"
-	BasicFields  = []string{"time", "priority", "message"}
 	RichFormat   = "%s [%9s] %d %s - %s\n"
-	RichFields   = []string{"time", "priority", "seq", "prefix", "message"}
 	SyslogFormat = "[%s] %s\n"
+
+	BasicFields  = []string{"time", "priority", "message"}
+	RichFields   = []string{"time", "priority", "seq", "prefix", "message"}
 	SyslogFields = []string{"priority", "message"}
 )
 
