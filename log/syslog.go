@@ -29,9 +29,9 @@ type syslogSink struct {
 func (sink *syslogSink) Log(fields Fields) {
 	vals := make([]interface{}, len(sink.fields))
 	for i, field := range sink.fields {
-		var ok bool
-		vals[i], ok = fields[field]
-		if !ok {
+		if fn, ok := fields[field]; ok {
+			vals[i] = fn()
+		} else {
 			vals[i] = "???"
 		}
 	}

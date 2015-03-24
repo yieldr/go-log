@@ -27,6 +27,13 @@ type Sink interface {
 	Log(Fields)
 }
 
+type nilSink struct{}
+
+func (sink *nilSink) Log(fields Fields) {}
+
+// NilSink is a no-op sink that is intended for testing.
+func NilSink() Sink { return &nilSink{} }
+
 type writerSink struct {
 	writer io.Writer
 	format string
