@@ -39,7 +39,7 @@ func NewStreamWriter(s Stream) *StreamWriter {
 	return &StreamWriter{
 		stream:         s,
 		bufferSize:     0,
-		maxBufferItems: 1000,
+		maxBufferItems: 500,
 		maxBufferSize:  1024 * 1024, //1MB
 	}
 }
