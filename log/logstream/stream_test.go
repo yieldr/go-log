@@ -93,3 +93,17 @@ func TestStreamWriterFlushNoError(t *testing.T) {
 	assert.Equal(t, 0, writer.bufferSize)
 	assert.Equal(t, []byte{1, 2, 3}, stream.buf.Bytes())
 }
+
+func BenchmarkStreamWriter(b *testing.B) {
+	stream := new(StreamMock)
+	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
+
+	w := NewStreamWriter(stream)
+	input := []byte{
+		1, 2, 3, 4, 5, 6, 7, 8, 9,
+	}
+
+	for i := 0; i < b.N; i++ {
+		w.Write(input)
+	}
+}
