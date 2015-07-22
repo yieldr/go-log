@@ -60,7 +60,9 @@ func TestLogStreamRun(t *testing.T) {
 
 	// data is flushed every 5s
 	time.Sleep(time.Second * 5)
-	assert.Nil(t, l.writer.buffer)
+	for i := 0; i < len(l.writer.buffer); i++ {
+		assert.Nil(t, l.writer.buffer[i])
+	}
 	assert.Equal(t, "now [INFO] foo\n", stream.buf.String())
 
 	// stop

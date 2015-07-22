@@ -1,11 +1,5 @@
 package logstream
 
-import (
-	"bytes"
-
-	"github.com/stretchr/testify/mock"
-)
-
 const (
 	maxRecordEntryNum   = 500
 	maxRecordBufferSize = 1024 * 1024
@@ -95,28 +89,4 @@ func (s *StreamWriter) Reset() {
 // Close the stream in s.
 func (s *StreamWriter) Close() error {
 	return s.stream.Close()
-}
-
-// StreamResponseMock is a mock for StreamResponse.
-type StreamResponseMock struct {
-	StreamResponse
-	mock.Mock
-}
-
-// StreamMock is a mock for Stream.
-type StreamMock struct {
-	Stream
-	mock.Mock
-	buf bytes.Buffer
-}
-
-// Put is mocked to return assigned values. It also records
-// any input data.
-func (s *StreamMock) Put(records []StreamRecord) (StreamResponse, error) {
-	for _, r := range records {
-		s.buf.Write(r)
-	}
-
-	args := s.Called(records)
-	return args.Get(0).(StreamResponse), args.Error(1)
 }
