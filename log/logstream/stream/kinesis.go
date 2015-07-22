@@ -1,4 +1,4 @@
-package logstream
+package stream
 
 import (
 	"strconv"
@@ -6,17 +6,25 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/kinesis"
+	"github.com/yieldr/go-log/log/logstream"
 )
 
 // Kinesis implements Stream interface and wraps a kinesis client.
-// TODO: need aws.Config.
 type Kinesis struct {
-	streamName string
-	stream     kinesis.Kinesis
+	name   string
+	client *kinesis.Kinesis
 }
 
-// Put records into a remote kinesis stream.
-func (k *Kinesis) Put(records []StreamRecord) (StreamResponse, error) {
+// New a kinesis stream with given name and config.
+func New(name string, config *aws.Config) *Kinesis {
+	return &Kinesis{
+		name:   name,
+		client: kinesis.New(config),
+	}
+}
+
+// Put records into a remote kinesis client.
+func (k *Kinesis) Put(records []logstream.StreamRecord) (logstream.StreamResponse, error) {
 
 	entries := make([]*kinesis.PutRecordsRequestEntry, len(records))
 	for i, record := range records {
@@ -28,10 +36,10 @@ func (k *Kinesis) Put(records []StreamRecord) (StreamResponse, error) {
 
 	params := &kinesis.PutRecordsInput{
 		Records:    entries,
-		StreamName: aws.String(k.streamName),
+		StreamName: aws.String(k.name),
 	}
 
-	return k.stream.PutRecords(params)
+	return k.client.PutRecords(params)
 }
 
 // Close.
@@ -42,5 +50,5 @@ func (k *Kinesis) Close() error {
 
 // getPartitionKey generates a random string, based on i(optional).
 func (k *Kinesis) getPartitionKey(i int) string {
-	return strconv.FormatInt(time.Now().Unix(), 10)
+	return strconv.FormatInt(time.Now().Unix()+(int64)(i), 10)
 }
