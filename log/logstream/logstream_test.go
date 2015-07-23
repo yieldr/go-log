@@ -4,9 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/yieldr/go-log/log"
+	"github.com/yieldr/go-log/log/test/assert"
 )
 
 func TestNewLogstream(t *testing.T) {
@@ -16,7 +15,6 @@ func TestNewLogstream(t *testing.T) {
 
 func TestLogStreamLog(t *testing.T) {
 	stream := new(StreamMock)
-	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
 
 	l := &Logstream{
 		format: log.BasicFormat,
@@ -36,7 +34,6 @@ func TestLogStreamLog(t *testing.T) {
 
 func TestLogStreamRun(t *testing.T) {
 	stream := new(StreamMock)
-	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
 
 	l := &Logstream{
 		interval: time.Second * 3,
@@ -60,7 +57,9 @@ func TestLogStreamRun(t *testing.T) {
 
 	// data is flushed every 5s
 	time.Sleep(time.Second * 5)
-	assert.Nil(t, l.writer.buffer)
+	for i := 0; i < len(l.writer.buffer); i++ {
+		assert.Nil(t, l.writer.buffer[i])
+	}
 	assert.Equal(t, "now [INFO] foo\n", stream.buf.String())
 
 	// stop
