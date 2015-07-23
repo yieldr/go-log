@@ -4,20 +4,17 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	"github.com/yieldr/go-log/log/test/assert"
 )
 
 // StreamResponseMock is a mock for StreamResponse.
 type StreamResponseMock struct {
 	StreamResponse
-	mock.Mock
 }
 
 // StreamMock is a mock for Stream.
 type StreamMock struct {
 	Stream
-	mock.Mock
 	buf bytes.Buffer
 }
 
@@ -28,14 +25,12 @@ func (s *StreamMock) Put(records []StreamRecord) (StreamResponse, error) {
 		s.buf.Write(r)
 	}
 
-	args := s.Called(records)
-	return args.Get(0).(StreamResponse), args.Error(1)
+	return new(StreamResponseMock), nil
 }
 
 func TestStreamWriter(t *testing.T) {
 
 	stream := new(StreamMock)
-	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
 
 	w := &StreamWriter{
 		stream: stream,
@@ -61,7 +56,6 @@ func TestStreamWriter(t *testing.T) {
 func TestStreamWriterWriteNoError(t *testing.T) {
 
 	stream := new(StreamMock)
-	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
 
 	tests := []struct {
 		writer            *StreamWriter
@@ -143,7 +137,6 @@ func TestStreamWriterWriteNoError(t *testing.T) {
 func TestStreamWriterFlushNoError(t *testing.T) {
 
 	stream := new(StreamMock)
-	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
 
 	// init writer
 	writer := &StreamWriter{
@@ -167,7 +160,6 @@ func TestStreamWriterFlushNoError(t *testing.T) {
 
 func BenchmarkStreamWriter(b *testing.B) {
 	stream := new(StreamMock)
-	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
 
 	w := NewStreamWriter(stream)
 	input := []byte{

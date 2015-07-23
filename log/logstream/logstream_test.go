@@ -4,9 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/yieldr/go-log/log"
+	"github.com/yieldr/go-log/log/test/assert"
 )
 
 func TestNewLogstream(t *testing.T) {
@@ -16,7 +15,6 @@ func TestNewLogstream(t *testing.T) {
 
 func TestLogStreamLog(t *testing.T) {
 	stream := new(StreamMock)
-	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
 
 	l := &Logstream{
 		format: log.BasicFormat,
@@ -36,7 +34,6 @@ func TestLogStreamLog(t *testing.T) {
 
 func TestLogStreamRun(t *testing.T) {
 	stream := new(StreamMock)
-	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
 
 	l := &Logstream{
 		interval: time.Second * 3,

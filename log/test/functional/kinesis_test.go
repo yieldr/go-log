@@ -1,4 +1,4 @@
-package stream
+package functional
 
 import (
 	"fmt"
@@ -8,22 +8,28 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/yieldr/go-log/log/logstream"
+	"github.com/yieldr/go-log/log/logstream/stream"
 )
 
-func TestPut(t *testing.T) {
+func TestKinesisStream(t *testing.T) {
 
-	region := "eu-west-1"
-	accessKeyId := "AKIAI6E2ROMVG4TX3LRQ"
-	secretAccessKey := "fVhSmlJvx8QF/ubmV+IOxTAepw4s9Zxai8j477nB"
+	fmt.Println("Test Kinesis Stream.")
+
+	// your own credentials
+	streamName := ""
+	region := ""
+	accessKeyId := ""
+	secretAccessKey := ""
 
 	config := &aws.Config{
 		Credentials: credentials.NewStaticCredentials(accessKeyId, secretAccessKey, ""),
 		Region:      region,
 	}
 
-	demo := New("demo", config)
+	demo := stream.New(streamName, config)
 
 	for i := 0; i < 10; i++ {
+
 		records := []logstream.StreamRecord{
 			logstream.StreamRecord([]byte(time.Now().String() + "-1")),
 			logstream.StreamRecord([]byte(time.Now().String() + "-2")),
