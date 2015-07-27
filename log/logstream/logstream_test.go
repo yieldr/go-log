@@ -30,8 +30,10 @@ func TestLogStreamLog(t *testing.T) {
 		"message":  func() interface{} { return "foo" },
 	}
 	l.Log(fields)
+	l.Log(fields)
+	l.Flush()
 
-	assert.Equal(t, "now [INFO] foo\n", string(l.writer.buffer[0]))
+	assert.Equal(t, "now [INFO] foo\nnow [INFO] foo\n", stream.buf.String())
 }
 
 func TestLogStreamRun(t *testing.T) {
@@ -60,7 +62,7 @@ func TestLogStreamRun(t *testing.T) {
 
 	// data is flushed every 5s
 	time.Sleep(time.Second * 5)
-	assert.Nil(t, l.writer.buffer)
+	assert.Equal(t, 0, l.writer.buf.getSize())
 	assert.Equal(t, "now [INFO] foo\n", stream.buf.String())
 
 	// stop

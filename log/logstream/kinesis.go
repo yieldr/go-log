@@ -1,6 +1,7 @@
 package logstream
 
 import (
+	"errors"
 	"strconv"
 	"time"
 
@@ -17,6 +18,9 @@ type Kinesis struct {
 
 // Put records into a remote kinesis stream.
 func (k *Kinesis) Put(records []StreamRecord) (StreamResponse, error) {
+	if len(records) == 0 {
+		return nil, errors.New("empty records for kinesis.")
+	}
 
 	entries := make([]*kinesis.PutRecordsRequestEntry, len(records))
 	for i, record := range records {
