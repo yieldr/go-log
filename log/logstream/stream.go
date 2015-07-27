@@ -3,8 +3,6 @@ package logstream
 import (
 	"bytes"
 	"errors"
-
-	"github.com/stretchr/testify/mock"
 )
 
 // StreamRecord represents a record to be sent to Stream.
@@ -138,13 +136,11 @@ func (r *recordBuffer) getRecords() []StreamRecord {
 // StreamResponseMock is a mock for StreamResponse.
 type StreamResponseMock struct {
 	StreamResponse
-	mock.Mock
 }
 
 // StreamMock is a mock for Stream.
 type StreamMock struct {
 	Stream
-	mock.Mock
 	buf bytes.Buffer
 }
 
@@ -155,6 +151,5 @@ func (s *StreamMock) Put(records []StreamRecord) (StreamResponse, error) {
 		s.buf.Write(r)
 	}
 
-	args := s.Called(records)
-	return args.Get(0).(StreamResponse), args.Error(1)
+	return new(StreamResponseMock), nil
 }
