@@ -10,10 +10,17 @@ import (
 )
 
 // Kinesis implements Stream interface and wraps a kinesis client.
-// TODO: need aws.Config.
 type Kinesis struct {
-	streamName string
-	stream     kinesis.Kinesis
+	name   string
+	stream *kinesis.Kinesis
+}
+
+// NewKinesisStream created a new Kinesis stream with given name and config.
+func NewKinesisStream(name string, c aws.Config) Stream {
+	return &Kinesis{
+		name:   name,
+		stream: kinesis.New(&c),
+	}
 }
 
 // Put records into a remote kinesis stream.
@@ -32,14 +39,13 @@ func (k *Kinesis) Put(records []StreamRecord) (StreamResponse, error) {
 
 	params := &kinesis.PutRecordsInput{
 		Records:    entries,
-		StreamName: aws.String(k.streamName),
+		StreamName: aws.String(k.name),
 	}
 
 	return k.stream.PutRecords(params)
 }
 
 // Close.
-// TODO: do we close the connection to kinesis?
 func (k *Kinesis) Close() error {
 	return nil
 }
