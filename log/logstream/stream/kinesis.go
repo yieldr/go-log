@@ -1,4 +1,4 @@
-package logstream
+package stream
 
 import (
 	"errors"
@@ -7,6 +7,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/kinesis"
+
+	"github.com/yieldr/go-log/log/logstream"
 )
 
 // Kinesis implements Stream interface and wraps a kinesis client.
@@ -15,8 +17,8 @@ type Kinesis struct {
 	stream *kinesis.Kinesis
 }
 
-// NewKinesisStream created a new Kinesis stream with given name and config.
-func NewKinesisStream(name string, c aws.Config) Stream {
+// New created a new Kinesis stream with given name and config.
+func New(name string, c aws.Config) logstream.Stream {
 	return &Kinesis{
 		name:   name,
 		stream: kinesis.New(&c),
@@ -24,7 +26,7 @@ func NewKinesisStream(name string, c aws.Config) Stream {
 }
 
 // Put records into a remote kinesis stream.
-func (k *Kinesis) Put(records []StreamRecord) (StreamResponse, error) {
+func (k *Kinesis) Put(records []logstream.StreamRecord) (logstream.StreamResponse, error) {
 	if len(records) == 0 {
 		return nil, errors.New("empty records for kinesis.")
 	}
