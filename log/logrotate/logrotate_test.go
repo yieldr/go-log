@@ -28,6 +28,30 @@ import (
 
 var tmpdir = fmt.Sprintf("%s%x/", os.TempDir(), rand.Int())
 
+type SubscriberMock struct {
+	Buf bytes.Buffer
+}
+
+func (sub *SubscriberMock) OnPreRotate(t time.Time) error {
+	sub.Buf.WriteString(t.String() + "\n")
+	return nil
+}
+
+func (sub *SubscriberMock) OnPostRotate(rotateFilename string) error {
+	sub.Buf.WriteString(rotateFilename + "\n")
+	return nil
+}
+
+func (sub *SubscriberMock) OnPreReload() error {
+	sub.Buf.WriteString("onPreReload called!\n")
+	return nil
+}
+
+func (sub *SubscriberMock) OnPostReload() error {
+	sub.Buf.WriteString("onPostReload called!\n")
+	return nil
+}
+
 func TestRotate(t *testing.T) {
 	err := os.MkdirAll(tmpdir, 0777)
 	if err != nil {
@@ -43,12 +67,16 @@ func TestRotate(t *testing.T) {
 	}
 	defer sink.Close()
 
+	subscriber := &SubscriberMock{}
+	sink.AddSubscriber(subscriber)
 	log.New(sink).Info("hello!")
 
 	// now rotate
 	if err = sink.Rotate(); err != nil {
 		t.Fatal(err)
 	}
+
+	t.Log(subscriber.Buf.String())
 
 	// lets check if the rotated file exists
 	files, err := ioutil.ReadDir(tmpdir)

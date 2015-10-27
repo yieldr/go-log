@@ -27,15 +27,16 @@ import (
 // Logrotate is a special case of sink which writes to a file and is capable of
 // rotating that file when certain conditions are met.
 type Logrotate struct {
-	file     *os.File
-	buf      *bufio.Writer
-	filename string
-	format   string
-	interval time.Duration
-	fields   []string
-	err      chan error
-	stop     chan bool
-	mux      sync.Mutex
+	file        *os.File
+	buf         *bufio.Writer
+	filename    string
+	format      string
+	interval    time.Duration
+	fields      []string
+	err         chan error
+	stop        chan bool
+	mux         sync.Mutex
+	subscribers []Subcriber
 }
 
 func (l *Logrotate) open() error {
@@ -63,11 +64,23 @@ func (l *Logrotate) close() error {
 }
 
 func (l *Logrotate) reload() error {
+	for _, subcriber := range l.subscribers {
+		if err := subcriber.OnPreReload(); err != nil {
+			return err
+		}
+	}
+
 	if err := l.close(); err != nil {
 		return err
 	}
 	if err := l.open(); err != nil {
 		return err
+	}
+
+	for _, subcriber := range l.subscribers {
+		if err := subcriber.OnPostReload(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -80,13 +93,27 @@ func DateFormat(s string) {
 }
 
 func (l *Logrotate) rotate(t time.Time) error {
+	for _, subcriber := range l.subscribers {
+		if err := subcriber.OnPreRotate(t); err != nil {
+			return err
+		}
+	}
+
 	if err := l.close(); err != nil {
 		return err
 	}
+
 	target := l.filename + "." + t.Format(dateFormat)
 	if err := os.Rename(l.filename, target); err != nil {
 		return err
 	}
+
+	for _, subcriber := range l.subscribers {
+		if err := subcriber.OnPostRotate(target); err != nil {
+			return err
+		}
+	}
+
 	if err := l.open(); err != nil {
 		return err
 	}
@@ -188,6 +215,13 @@ func (l *Logrotate) Stop() {
 	l.stop <- true
 }
 
+// AddSubscriber appends a subscriber to handle events.
+// The user can add multiple subscribers, each subcriber
+// will be called in the order as it is appended.
+func (l *Logrotate) AddSubscriber(sub Subcriber) {
+	l.subscribers = append(l.subscribers, sub)
+}
+
 // New returns a new Logrotate using the supplied arguments.
 func New(file string, interval time.Duration, format string, fields []string) (*Logrotate, error) {
 	l := &Logrotate{
@@ -199,4 +233,16 @@ func New(file string, interval time.Duration, format string, fields []string) (*
 		stop:     make(chan bool),
 	}
 	return l, l.open()
+}
+
+// Subcriber defines event handler functions inside logrotate:
+// OnPreRotate is called BEFORE the file is rotated
+// OnPostRotate is called AFTER the file is rotated
+// OnPreReload is called BEFORE logrotate is reloaded
+// OnPostReload is called AFTER logrotate is reloaded
+type Subcriber interface {
+	OnPreRotate(t time.Time) error
+	OnPostRotate(rotateFilename string) error
+	OnPreReload() error
+	OnPostReload() error
 }
