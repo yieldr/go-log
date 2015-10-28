@@ -32,23 +32,8 @@ type SubscriberMock struct {
 	Buf bytes.Buffer
 }
 
-func (sub *SubscriberMock) OnPreRotate(t time.Time) error {
-	sub.Buf.WriteString(t.String() + "\n")
-	return nil
-}
-
-func (sub *SubscriberMock) OnPostRotate(rotateFilename string) error {
+func (sub *SubscriberMock) OnRotate(rotateFilename string) error {
 	sub.Buf.WriteString(rotateFilename + "\n")
-	return nil
-}
-
-func (sub *SubscriberMock) OnPreReload() error {
-	sub.Buf.WriteString("onPreReload called!\n")
-	return nil
-}
-
-func (sub *SubscriberMock) OnPostReload() error {
-	sub.Buf.WriteString("onPostReload called!\n")
 	return nil
 }
 
@@ -76,7 +61,9 @@ func TestRotate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(subscriber.Buf.String())
+	if subscriber.Buf.Len() == 0 {
+		t.Fatalf("subscriber is not called")
+	}
 
 	// lets check if the rotated file exists
 	files, err := ioutil.ReadDir(tmpdir)

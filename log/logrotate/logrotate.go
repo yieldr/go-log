@@ -36,7 +36,7 @@ type Logrotate struct {
 	err         chan error
 	stop        chan bool
 	mux         sync.Mutex
-	subscribers []Subcriber
+	subscribers []Subscriber
 }
 
 func (l *Logrotate) open() error {
@@ -64,12 +64,6 @@ func (l *Logrotate) close() error {
 }
 
 func (l *Logrotate) reload() error {
-	for _, subcriber := range l.subscribers {
-		if err := subcriber.OnPreReload(); err != nil {
-			return err
-		}
-	}
-
 	if err := l.close(); err != nil {
 		return err
 	}
@@ -77,11 +71,6 @@ func (l *Logrotate) reload() error {
 		return err
 	}
 
-	for _, subcriber := range l.subscribers {
-		if err := subcriber.OnPostReload(); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -93,12 +82,6 @@ func DateFormat(s string) {
 }
 
 func (l *Logrotate) rotate(t time.Time) error {
-	for _, subcriber := range l.subscribers {
-		if err := subcriber.OnPreRotate(t); err != nil {
-			return err
-		}
-	}
-
 	if err := l.close(); err != nil {
 		return err
 	}
@@ -109,7 +92,7 @@ func (l *Logrotate) rotate(t time.Time) error {
 	}
 
 	for _, subcriber := range l.subscribers {
-		if err := subcriber.OnPostRotate(target); err != nil {
+		if err := subcriber.OnRotate(target); err != nil {
 			return err
 		}
 	}
@@ -218,7 +201,7 @@ func (l *Logrotate) Stop() {
 // AddSubscriber appends a subscriber to handle events.
 // The user can add multiple subscribers, each subcriber
 // will be called in the order as it is appended.
-func (l *Logrotate) AddSubscriber(sub Subcriber) {
+func (l *Logrotate) AddSubscriber(sub Subscriber) {
 	l.subscribers = append(l.subscribers, sub)
 }
 
@@ -235,14 +218,8 @@ func New(file string, interval time.Duration, format string, fields []string) (*
 	return l, l.open()
 }
 
-// Subcriber defines event handler functions inside logrotate:
-// OnPreRotate is called BEFORE the file is rotated
-// OnPostRotate is called AFTER the file is rotated
-// OnPreReload is called BEFORE logrotate is reloaded
-// OnPostReload is called AFTER logrotate is reloaded
-type Subcriber interface {
-	OnPreRotate(t time.Time) error
-	OnPostRotate(rotateFilename string) error
-	OnPreReload() error
-	OnPostReload() error
+// Subscriber defines event handler functions inside logrotate.
+// handle is called when the file is rotated.
+type Subscriber interface {
+	OnRotate(filename string) error
 }
