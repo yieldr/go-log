@@ -1,3 +1,5 @@
+// +build !windows
+
 package log
 
 // Copyright 2014 Yieldr
