@@ -27,15 +27,16 @@ import (
 // Logrotate is a special case of sink which writes to a file and is capable of
 // rotating that file when certain conditions are met.
 type Logrotate struct {
-	file     *os.File
-	buf      *bufio.Writer
-	filename string
-	format   string
-	interval time.Duration
-	fields   []string
-	err      chan error
-	stop     chan bool
-	mux      sync.Mutex
+	file        *os.File
+	buf         *bufio.Writer
+	filename    string
+	format      string
+	interval    time.Duration
+	fields      []string
+	err         chan error
+	stop        chan bool
+	mux         sync.Mutex
+	subscribers []Subscriber
 }
 
 func (l *Logrotate) open() error {
@@ -69,6 +70,7 @@ func (l *Logrotate) reload() error {
 	if err := l.open(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -83,10 +85,18 @@ func (l *Logrotate) rotate(t time.Time) error {
 	if err := l.close(); err != nil {
 		return err
 	}
+
 	target := l.filename + "." + t.Format(dateFormat)
 	if err := os.Rename(l.filename, target); err != nil {
 		return err
 	}
+
+	for _, subcriber := range l.subscribers {
+		if err := subcriber.OnRotate(target); err != nil {
+			return err
+		}
+	}
+
 	if err := l.open(); err != nil {
 		return err
 	}
@@ -188,6 +198,13 @@ func (l *Logrotate) Stop() {
 	l.stop <- true
 }
 
+// AddSubscriber appends a subscriber to handle events.
+// The user can add multiple subscribers, each subcriber
+// will be called in the order as it is appended.
+func (l *Logrotate) AddSubscriber(sub Subscriber) {
+	l.subscribers = append(l.subscribers, sub)
+}
+
 // New returns a new Logrotate using the supplied arguments.
 func New(file string, interval time.Duration, format string, fields []string) (*Logrotate, error) {
 	l := &Logrotate{
@@ -199,4 +216,10 @@ func New(file string, interval time.Duration, format string, fields []string) (*
 		stop:     make(chan bool),
 	}
 	return l, l.open()
+}
+
+// Subscriber defines event handler functions inside logrotate.
+// handle is called when the file is rotated.
+type Subscriber interface {
+	OnRotate(filename string) error
 }
