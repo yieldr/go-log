@@ -77,6 +77,13 @@ func (l *Logstream) Log(fields log.Fields) {
 	fmt.Fprintf(l.writer, l.format, vals...)
 }
 
+// Write writes p to the internal buffer.
+func (l *Logstream) Write(p []byte) (int, error) {
+	l.mux.Lock()
+	defer l.mux.Unlock()
+	return l.writer.Write(p)
+}
+
 // Run is usually used as a deamon. All the buffered data is flushed periodically
 // until it is stopped.
 func (l *Logstream) Run() {

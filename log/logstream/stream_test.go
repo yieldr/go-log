@@ -1,16 +1,23 @@
 package logstream
 
-import (
-	"testing"
+import "testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-)
+func assertByteSliceEqual(a, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
 
 func TestStreamWriterWriteNoError(t *testing.T) {
 
 	stream := new(StreamMock)
-	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
 
 	tests := []struct {
 		writer   *StreamWriter
@@ -22,23 +29,23 @@ func TestStreamWriterWriteNoError(t *testing.T) {
 		{
 			writer: &StreamWriter{
 				stream:         stream,
-				bufferSize:     0,
+				buf:            newRecordBuffer(500),
 				maxBufferItems: 2,
 				maxBufferSize:  4,
 			},
 			writes:   1,
 			input:    []byte{1, 2},
-			expected: nil,
+			expected: []byte{},
 		},
 		// buffer size exceeds, flush is triggered
 		{
 			writer: &StreamWriter{
 				stream:         stream,
-				bufferSize:     0,
+				buf:            newRecordBuffer(500),
 				maxBufferItems: 2,
 				maxBufferSize:  4,
 			},
-			writes:   1,
+			writes:   2,
 			input:    []byte{1, 2, 3, 4, 5},
 			expected: []byte{1, 2, 3, 4, 5},
 		},
@@ -46,13 +53,13 @@ func TestStreamWriterWriteNoError(t *testing.T) {
 		{
 			writer: &StreamWriter{
 				stream:         stream,
-				bufferSize:     0,
+				buf:            newRecordBuffer(500),
 				maxBufferItems: 2,
 				maxBufferSize:  4,
 			},
-			writes:   2,
-			input:    []byte{1, 2, 3},
-			expected: []byte{1, 2, 3, 1, 2, 3},
+			writes:   3,
+			input:    []byte{1, 2},
+			expected: []byte{1, 2, 1, 2},
 		},
 	}
 
@@ -60,36 +67,72 @@ func TestStreamWriterWriteNoError(t *testing.T) {
 		stream.buf.Reset()
 
 		for i := 0; i < test.writes; i++ {
-			n, err := test.writer.Write(test.input)
-			assert.Equal(t, len(test.input), n)
-			assert.NoError(t, err)
+			_, err := test.writer.Write(test.input)
+			if err != nil {
+				t.Error(err)
+			}
 		}
 
-		assert.Equal(t, test.expected, stream.buf.Bytes())
+		if !assertByteSliceEqual(test.expected, stream.buf.Bytes()) {
+			t.Error("buffer data not match.")
+		}
 	}
 }
 
 func TestStreamWriterFlushNoError(t *testing.T) {
 
 	stream := new(StreamMock)
-	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
 
 	// init writer
 	writer := &StreamWriter{
 		stream: stream,
-		buffer: []StreamRecord{StreamRecord([]byte{1, 2})},
+		buf:    newRecordBuffer(500),
 	}
 
 	writer.Flush()
-	assert.Equal(t, []StreamRecord(nil), writer.buffer)
-	assert.Equal(t, 0, writer.bufferSize)
-	assert.Equal(t, []byte{1, 2}, stream.buf.Bytes())
+	if 0 != writer.buf.getItems() {
+		t.Error("writer buffer items should be 0.")
+	}
+	if 0 != writer.buf.getSize() {
+		t.Error("writer buffer size should be 0.")
+	}
+	if []byte(nil) != stream.buf.Bytes() {
+		t.Error("writer buffer should be nil.")
+	}
 
 	// write more
-	writer.buffer = []StreamRecord{StreamRecord([]byte{3})}
+	writer.Write([]byte{1, 2, 3})
 
 	writer.Flush()
-	assert.Equal(t, []StreamRecord(nil), writer.buffer)
-	assert.Equal(t, 0, writer.bufferSize)
-	assert.Equal(t, []byte{1, 2, 3}, stream.buf.Bytes())
+	if 0 != writer.buf.getItems() {
+		t.Error("writer buffer items should be 0.")
+	}
+	if 0 != writer.buf.getSize() {
+		t.Error("writer buffer size should be 0.")
+	}
+	if !assertByteSliceEqual([]byte{1, 2, 3}, stream.buf.Bytes()) {
+		t.Error("writer buffer not match,")
+	}
+}
+
+func BenchmarkStreamWriter(b *testing.B) {
+
+	stream := new(StreamMock)
+
+	w := NewStreamWriter(stream)
+	p := []byte{
+		1, 2, 3, 4, 5,
+		1, 2, 3, 4, 5,
+		1, 2, 3, 4, 5,
+		1, 2, 3, 4, 5,
+	}
+
+	for i := 0; i < b.N; i++ {
+		_, err := w.Write(p)
+		if err != nil {
+			b.FailNow()
+		}
+	}
+
+	b.ReportAllocs()
 }

@@ -4,19 +4,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/yieldr/go-log/log"
 )
 
 func TestNewLogstream(t *testing.T) {
 	l := New(nil, time.Second, log.BasicFormat, log.BasicFields)
-	assert.NotNil(t, l)
+	if l == nil {
+		t.Fatal("NewLogstream failed")
+	}
 }
 
 func TestLogStreamLog(t *testing.T) {
 	stream := new(StreamMock)
-	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
 
 	l := &Logstream{
 		format: log.BasicFormat,
@@ -30,13 +29,16 @@ func TestLogStreamLog(t *testing.T) {
 		"message":  func() interface{} { return "foo" },
 	}
 	l.Log(fields)
+	l.Log(fields)
+	l.Flush()
 
-	assert.Equal(t, "now [INFO] foo\n", string(l.writer.buffer[0]))
+	if stream.buf.String() != "now [INFO] foo\nnow [INFO] foo\n" {
+		t.Error("Logstream log buffer not matched")
+	}
 }
 
 func TestLogStreamRun(t *testing.T) {
 	stream := new(StreamMock)
-	stream.On("Put", mock.Anything).Return(new(StreamResponseMock), nil)
 
 	l := &Logstream{
 		interval: time.Second * 3,
@@ -60,8 +62,14 @@ func TestLogStreamRun(t *testing.T) {
 
 	// data is flushed every 5s
 	time.Sleep(time.Second * 5)
-	assert.Nil(t, l.writer.buffer)
-	assert.Equal(t, "now [INFO] foo\n", stream.buf.String())
+
+	if 0 != l.writer.buf.getSize() {
+		t.Error("writer buffer size should be 0.")
+	}
+
+	if "now [INFO] foo\n" != stream.buf.String() {
+		t.Error("writer buffer content not match")
+	}
 
 	// stop
 	l.Stop()
